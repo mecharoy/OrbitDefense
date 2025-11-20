@@ -282,21 +282,33 @@ export class Game {
 
         if (enemiesInRange.length > 0) {
           const target = enemiesInRange[0];
+
+          // Check if satellite still active after firing (might run out of ammo)
+          const wasActive = satellite.active;
           satellite.fire(currentTime);
 
-          const projectile = this.projectilePool.acquire();
-          projectile.x = satellite.x;
-          projectile.y = satellite.y;
-          projectile.targetX = target.x;
-          projectile.targetY = target.y;
-          projectile.type = satellite.weaponType;
-          projectile.damage = satellite.damage;
-          projectile.angle = calculateAngle(satellite.x, satellite.y, target.x, target.y);
-          projectile.active = true;
-          projectile.isExploding = false;
-          projectile.trail = [];
+          // If satellite was destroyed due to ammo depletion
+          if (!satellite.active && wasActive) {
+            this.particleSystem.createExplosion(satellite.x, satellite.y, satellite.getColor(), 20);
+            this.addScreenShake(2, 0.1);
+          }
 
-          this.projectiles.push(projectile);
+          // Only create projectile if satellite is still active
+          if (satellite.active) {
+            const projectile = this.projectilePool.acquire();
+            projectile.x = satellite.x;
+            projectile.y = satellite.y;
+            projectile.targetX = target.x;
+            projectile.targetY = target.y;
+            projectile.type = satellite.weaponType;
+            projectile.damage = satellite.damage;
+            projectile.angle = calculateAngle(satellite.x, satellite.y, target.x, target.y);
+            projectile.active = true;
+            projectile.isExploding = false;
+            projectile.trail = [];
+
+            this.projectiles.push(projectile);
+          }
         }
       }
     }

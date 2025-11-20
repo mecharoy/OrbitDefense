@@ -7,6 +7,7 @@ import {
   SATELLITE_FIRE_RATE,
   SATELLITE_DAMAGE,
   SATELLITE_MAX_HEALTH,
+  SATELLITE_MAX_AMMO,
   ORBITAL_SPEED_BASE,
   COLORS
 } from '../utils/constants.js';
@@ -36,6 +37,10 @@ export class Satellite extends Entity {
     this.health = this.maxHealth;
     this.flashTime = 0;
 
+    // Ammo system
+    this.maxAmmo = SATELLITE_MAX_AMMO[weaponType];
+    this.ammo = this.maxAmmo;
+
     // Shield-specific properties
     this.shieldActive = false;
     this.shieldRadius = 0;
@@ -59,11 +64,17 @@ export class Satellite extends Entity {
   }
 
   canFire(currentTime) {
-    return currentTime - this.lastFireTime >= this.fireRate;
+    return currentTime - this.lastFireTime >= this.fireRate && this.ammo > 0;
   }
 
   fire(currentTime) {
     this.lastFireTime = currentTime;
+    this.ammo--;
+
+    // Destroy satellite if out of ammo
+    if (this.ammo <= 0) {
+      this.destroy();
+    }
   }
 
   takeDamage(amount) {
@@ -155,6 +166,35 @@ export class Satellite extends Entity {
       ctx.strokeStyle = '#0f0';
       ctx.lineWidth = 1;
       ctx.strokeRect(barX, barY, barWidth, barHeight);
+    }
+
+    // Ammo bar (always show)
+    const ammoBarWidth = this.radius * 2.5;
+    const ammoBarHeight = 3;
+    const ammoBarX = this.x - ammoBarWidth / 2;
+    const ammoBarY = this.y + this.radius + 8;
+
+    // Background
+    ctx.fillStyle = '#222';
+    ctx.fillRect(ammoBarX, ammoBarY, ammoBarWidth, ammoBarHeight);
+
+    // Ammo
+    const ammoPercent = this.ammo / this.maxAmmo;
+    const ammoColor = ammoPercent > 0.5 ? '#0ff' : ammoPercent > 0.2 ? '#ff0' : '#f00';
+    ctx.fillStyle = ammoColor;
+    ctx.fillRect(ammoBarX, ammoBarY, ammoBarWidth * ammoPercent, ammoBarHeight);
+
+    // Border
+    ctx.strokeStyle = '#0ff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(ammoBarX, ammoBarY, ammoBarWidth, ammoBarHeight);
+
+    // Ammo text
+    if (ammoPercent < 0.3) {
+      ctx.fillStyle = ammoColor;
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(this.ammo, this.x, ammoBarY + ammoBarHeight + 10);
     }
 
     ctx.restore();

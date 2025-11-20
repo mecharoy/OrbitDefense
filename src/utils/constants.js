@@ -6,8 +6,8 @@ export const CENTER_Y = CANVAS_HEIGHT / 2;
 
 // Planet
 export const PLANET_RADIUS = 50;
-export const PLANET_EXPANSION_RATE = 0.5; // pixels per wave
-export const MAX_PLANET_RADIUS = 80;
+export const PLANET_EXPANSION_RATE = 2; // pixels per wave (more visible)
+export const MAX_PLANET_RADIUS = 100;
 
 // Orbits
 export const ORBIT_RADII = [120, 180, 240, 300, 360];
@@ -39,6 +39,11 @@ export const SATELLITE_MAX_HEALTH = {
   laser: 100,
   missile: 150,
   shield: 200
+};
+export const SATELLITE_MAX_AMMO = {
+  laser: 50,    // 50 shots
+  missile: 20,  // 20 shots
+  shield: 30    // 30 shield activations
 };
 export const METEOR_DAMAGE_TO_SATELLITE = 50;
 
