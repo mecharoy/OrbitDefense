@@ -13,7 +13,8 @@ import {
   INITIAL_ENERGY,
   INITIAL_HEALTH,
   PASSIVE_ENERGY_RATE,
-  SATELLITE_COST,
+  SATELLITE_BASE_COST,
+  SATELLITE_COST_SCALING,
   SATELLITE_DAMAGE,
   PLANET_EXPANSION_RATE,
   METEOR_DAMAGE_TO_SATELLITE,
@@ -21,6 +22,8 @@ import {
   ENEMY_SPEED_SCALING,
   ENEMY_DAMAGE_SCALING,
   ENEMY_TYPES,
+  ORBIT_RADII,
+  SHIELD_ORBIT_LIMITS,
   CENTER_X,
   CENTER_Y
 } from '../utils/constants.js';
@@ -117,10 +120,17 @@ export class Game {
     });
   }
 
+  getSatelliteCost(weaponType) {
+    const baseCost = SATELLITE_BASE_COST[weaponType];
+    const scaling = SATELLITE_COST_SCALING[weaponType];
+    const wave = this.waveSystem.currentWave;
+    return Math.floor(baseCost * Math.pow(scaling, wave - 1));
+  }
+
   selectWeapon(weaponType) {
     if (this.state !== 'playing') return;
 
-    const cost = SATELLITE_COST[weaponType];
+    const cost = this.getSatelliteCost(weaponType);
     if (this.energy >= cost) {
       this.dragWeaponType = weaponType;
       this.isDragging = true;
@@ -140,6 +150,21 @@ export class Game {
 
   canPlaceSatellite(orbitRadius, angle) {
     const minAngleDiff = 0.3; // radians
+
+    // Check shield limits for this orbit
+    if (this.dragWeaponType === 'shield') {
+      const orbitIndex = ORBIT_RADII.indexOf(orbitRadius);
+      if (orbitIndex !== -1) {
+        const limit = SHIELD_ORBIT_LIMITS[orbitIndex];
+        const shieldsOnOrbit = this.satellites.filter(
+          s => s.active && s.weaponType === 'shield' && s.orbitRadius === orbitRadius
+        ).length;
+
+        if (shieldsOnOrbit >= limit) {
+          return false; // Too many shields on this orbit
+        }
+      }
+    }
 
     for (const satellite of this.satellites) {
       if (Math.abs(satellite.orbitRadius - orbitRadius) < 5) {
@@ -163,7 +188,7 @@ export class Game {
       return;
     }
 
-    const cost = SATELLITE_COST[this.dragWeaponType];
+    const cost = this.getSatelliteCost(this.dragWeaponType);
     if (this.energy >= cost) {
       const angle = calculateAngle(CENTER_X, CENTER_Y, this.dragX, this.dragY);
       const satellite = new Satellite(this.dragOrbitRadius, angle, this.dragWeaponType);
@@ -624,7 +649,7 @@ export class Game {
     document.getElementById('wave').textContent = this.waveSystem.currentWave;
     document.getElementById('health').textContent = Math.floor(this.planet.health);
 
-    // Update button states
+    // Update button states and costs
     const buttons = {
       laserBtn: 'laser',
       missileBtn: 'missile',
@@ -633,8 +658,13 @@ export class Game {
 
     for (const [btnId, weaponType] of Object.entries(buttons)) {
       const btn = document.getElementById(btnId);
-      const cost = SATELLITE_COST[weaponType];
+      const cost = this.getSatelliteCost(weaponType);
       btn.disabled = this.energy < cost || this.state !== 'playing';
+
+      // Update button text with current cost
+      const label = weaponType.charAt(0).toUpperCase() + weaponType.slice(1);
+      const hotkey = weaponType.charAt(0).toUpperCase();
+      btn.textContent = `${label} [${hotkey}] - ${cost}E`;
     }
   }
 

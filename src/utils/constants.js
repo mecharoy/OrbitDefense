@@ -31,11 +31,17 @@ export const SATELLITE_DAMAGE = {
   missile: 50,
   shield: 5  // Damage per second to enemies in shield field
 };
-export const SATELLITE_COST = {
-  laser: 20,
-  missile: 50,
+export const SATELLITE_BASE_COST = {
+  laser: 15,    // Start cheaper
+  missile: 35,  // Start cheaper
   shield: 80
 };
+export const SATELLITE_COST_SCALING = {
+  laser: 1.12,    // 12% increase per wave
+  missile: 1.15,  // 15% increase per wave
+  shield: 1.0     // Shield cost stays constant
+};
+export const SHIELD_ORBIT_LIMITS = [2, 3, 999, 999, 999]; // Max shields per orbit (2 on closest, 3 on second, unlimited on rest)
 export const SATELLITE_MAX_HEALTH = {
   laser: 100,
   missile: 150,
