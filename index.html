@@ -128,6 +128,7 @@
     #stats > div:nth-child(2) { animation-delay: 0.1s; }
     #stats > div:nth-child(3) { animation-delay: 0.2s; }
     #stats > div:nth-child(4) { animation-delay: 0.3s; }
+    #stats > div:nth-child(5) { animation-delay: 0.4s; }
 
     #stats span {
       color: #00ff00;
@@ -330,6 +331,23 @@
         transform: translate(-50%, -50%) scale(0.8);
       }
     }
+
+    @keyframes celebrateHighScore {
+      0%, 100% {
+        transform: scale(1) rotate(0deg);
+      }
+      25% {
+        transform: scale(1.1) rotate(-5deg);
+      }
+      75% {
+        transform: scale(1.1) rotate(5deg);
+      }
+    }
+
+    #highScoreMessage.show {
+      display: block !important;
+      animation: celebrateHighScore 0.5s ease-in-out 3;
+    }
   </style>
 </head>
 <body>
@@ -339,6 +357,7 @@
     <div id="stats">
       <div>Energy: <span id="energy">100</span></div>
       <div>Score: <span id="score">0</span></div>
+      <div>High Score: <span id="highScore">0</span></div>
       <div>Wave: <span id="wave">1</span></div>
       <div>Health: <span id="health">100</span></div>
     </div>
@@ -367,6 +386,8 @@
     <h2>GAME OVER</h2>
     <p>Final Score: <span id="finalScore">0</span></p>
     <p>Waves Survived: <span id="finalWave">0</span></p>
+    <p id="highScoreMessage" style="display: none; color: #ffff00; font-size: 24px; margin-top: 20px; text-shadow: 0 0 20px #ffff00;">🏆 NEW HIGH SCORE! 🏆</p>
+    <p style="margin-top: 10px; font-size: 16px; color: #aaa;">High Score: <span id="gameOverHighScore">0</span></p>
     <button id="restartBtn">RESTART</button>
   </div>
 

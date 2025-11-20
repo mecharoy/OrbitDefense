@@ -4,6 +4,7 @@ import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { WaveSystem } from '../systems/WaveSystem.js';
 import { ParticleSystem } from '../systems/ParticleSystem.js';
 import { ObjectPool } from '../utils/pool.js';
+import { Storage } from '../utils/storage.js';
 import { Planet } from '../entities/Planet.js';
 import { Satellite } from '../entities/Satellite.js';
 import { Enemy } from '../entities/Enemy.js';
@@ -38,6 +39,8 @@ export class Game {
     this.state = 'playing'; // 'playing', 'paused', 'gameover'
     this.energy = INITIAL_ENERGY;
     this.score = 0;
+    this.highScore = Storage.getHighScore();
+    this.highWave = Storage.getHighWave();
 
     // Entities
     this.planet = new Planet();
@@ -543,8 +546,30 @@ export class Game {
   gameOver() {
     this.state = 'gameover';
 
+    // Check for new high scores
+    const { isNewHighScore, isNewHighWave } = Storage.checkAndUpdateHighScore(
+      this.score,
+      this.waveSystem.currentWave
+    );
+
+    // Update high score in memory
+    this.highScore = Storage.getHighScore();
+    this.highWave = Storage.getHighWave();
+
+    // Update UI
     document.getElementById('finalScore').textContent = this.score;
     document.getElementById('finalWave').textContent = this.waveSystem.currentWave;
+    document.getElementById('gameOverHighScore').textContent = this.highScore;
+
+    // Show high score celebration if applicable
+    const highScoreMsg = document.getElementById('highScoreMessage');
+    if (isNewHighScore) {
+      highScoreMsg.style.display = 'block';
+      highScoreMsg.classList.add('show');
+    } else {
+      highScoreMsg.style.display = 'none';
+      highScoreMsg.classList.remove('show');
+    }
 
     const gameOverEl = document.getElementById('gameOver');
     gameOverEl.style.display = 'block';
@@ -595,6 +620,7 @@ export class Game {
   updateUI() {
     document.getElementById('energy').textContent = Math.floor(this.energy);
     document.getElementById('score').textContent = this.score;
+    document.getElementById('highScore').textContent = this.highScore;
     document.getElementById('wave').textContent = this.waveSystem.currentWave;
     document.getElementById('health').textContent = Math.floor(this.planet.health);
 
