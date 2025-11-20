@@ -2,6 +2,7 @@ import { Renderer } from '../rendering/Renderer.js';
 import { InputHandler } from '../input/InputHandler.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
 import { WaveSystem } from '../systems/WaveSystem.js';
+import { ParticleSystem } from '../systems/ParticleSystem.js';
 import { ObjectPool } from '../utils/pool.js';
 import { Planet } from '../entities/Planet.js';
 import { Satellite } from '../entities/Satellite.js';
@@ -24,6 +25,7 @@ export class Game {
     this.inputHandler = new InputHandler(canvas, this);
     this.collisionSystem = new CollisionSystem();
     this.waveSystem = new WaveSystem();
+    this.particleSystem = new ParticleSystem();
 
     // Game state
     this.state = 'playing'; // 'playing', 'paused', 'gameover'
@@ -69,6 +71,9 @@ export class Game {
     this.lastTime = 0;
     this.lastEnergyTime = 0;
     this.animationFrameId = null;
+
+    // Screen shake
+    this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
 
     // UI elements
     this.setupUI();
@@ -181,6 +186,9 @@ export class Game {
   startNextWave() {
     const enemyData = this.waveSystem.startWave();
 
+    // Show wave notification
+    this.showWaveNotification(this.waveSystem.currentWave);
+
     for (const data of enemyData) {
       const enemy = this.enemyPool.acquire();
       enemy.x = data.x;
@@ -213,8 +221,38 @@ export class Game {
     this.updateUI();
   }
 
+  showWaveNotification(waveNumber) {
+    const notification = document.getElementById('waveNotification');
+    notification.textContent = `WAVE ${waveNumber}`;
+    notification.style.animation = 'waveAnnounce 2s ease-out';
+
+    setTimeout(() => {
+      notification.style.animation = '';
+    }, 2000);
+  }
+
+  addScreenShake(intensity, duration) {
+    this.screenShake.intensity = Math.max(this.screenShake.intensity, intensity);
+    this.screenShake.duration = Math.max(this.screenShake.duration, duration);
+  }
+
+  updateScreenShake(deltaTime) {
+    if (this.screenShake.duration > 0) {
+      this.screenShake.duration -= deltaTime;
+      this.screenShake.x = (Math.random() - 0.5) * this.screenShake.intensity;
+      this.screenShake.y = (Math.random() - 0.5) * this.screenShake.intensity;
+    } else {
+      this.screenShake.x = 0;
+      this.screenShake.y = 0;
+      this.screenShake.intensity = 0;
+    }
+  }
+
   update(deltaTime) {
     if (this.state !== 'playing') return;
+
+    // Update screen shake
+    this.updateScreenShake(deltaTime);
 
     // Update passive energy
     const currentTime = Date.now();
@@ -223,6 +261,9 @@ export class Game {
       this.lastEnergyTime = currentTime;
       this.updateUI();
     }
+
+    // Update particles
+    this.particleSystem.update(deltaTime);
 
     // Update satellites
     for (const satellite of this.satellites) {
@@ -312,12 +353,19 @@ export class Game {
     for (const { projectile, enemy } of hits) {
       if (projectile.type === 'missile') {
         projectile.explode();
+        this.addScreenShake(5, 0.2);
       } else {
         const killed = enemy.takeDamage(projectile.damage);
         this.addDamageNumber(enemy.x, enemy.y, projectile.damage);
 
+        // Add impact particles
+        this.particleSystem.createImpact(enemy.x, enemy.y, projectile.getColor(), 8);
+
         if (killed) {
           this.enemyDestroyed(enemy);
+          // Add explosion particles
+          this.particleSystem.createExplosion(enemy.x, enemy.y, enemy.color, 25);
+          this.addScreenShake(3, 0.15);
         }
 
         projectile.destroy();
@@ -335,7 +383,12 @@ export class Game {
 
           if (killed) {
             this.enemyDestroyed(enemy);
+            this.particleSystem.createExplosion(enemy.x, enemy.y, enemy.color, 20);
           }
+        }
+
+        if (hitEnemies.length > 0) {
+          this.addScreenShake(8, 0.3);
         }
       }
     }
@@ -361,7 +414,13 @@ export class Game {
 
     document.getElementById('finalScore').textContent = this.score;
     document.getElementById('finalWave').textContent = this.waveSystem.currentWave;
-    document.getElementById('gameOver').style.display = 'block';
+
+    const gameOverEl = document.getElementById('gameOver');
+    gameOverEl.style.display = 'block';
+    gameOverEl.classList.add('show');
+
+    // Screen shake for game over
+    this.addScreenShake(15, 0.5);
   }
 
   restart() {
@@ -383,12 +442,20 @@ export class Game {
     // Reset planet
     this.planet = new Planet();
 
+    // Reset particles
+    this.particleSystem.clear();
+
+    // Reset screen shake
+    this.screenShake = { x: 0, y: 0, intensity: 0, duration: 0 };
+
     // Reset wave system
     this.waveSystem.reset();
     this.startNextWave();
 
     // Hide game over screen
-    document.getElementById('gameOver').style.display = 'none';
+    const gameOverEl = document.getElementById('gameOver');
+    gameOverEl.style.display = 'none';
+    gameOverEl.classList.remove('show');
     document.getElementById('pauseBtn').textContent = 'Pause [P]';
 
     this.updateUI();
@@ -420,13 +487,15 @@ export class Game {
       satellites: this.satellites,
       enemies: this.enemies,
       projectiles: this.projectiles,
+      particles: this.particleSystem.particles,
       damageNumbers: this.damageNumbers,
       isDragging: this.isDragging,
       dragX: this.dragX,
       dragY: this.dragY,
       dragOrbitRadius: this.dragOrbitRadius,
       dragWeaponType: this.dragWeaponType,
-      canPlace: this.canPlace
+      canPlace: this.canPlace,
+      screenShake: this.screenShake
     });
   }
 

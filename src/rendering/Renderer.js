@@ -119,13 +119,29 @@ export class Renderer {
     this.ctx.restore();
   }
 
+  renderParticles(particles) {
+    for (const particle of particles) {
+      if (particle.active) {
+        particle.render(this.ctx);
+      }
+    }
+  }
+
   renderFrame(gameState) {
+    this.ctx.save();
+
+    // Apply screen shake
+    if (gameState.screenShake) {
+      this.ctx.translate(gameState.screenShake.x, gameState.screenShake.y);
+    }
+
     this.clear();
     this.renderBackground();
     this.renderPlanet(gameState.planet);
     this.renderProjectiles(gameState.projectiles);
     this.renderEnemies(gameState.enemies);
     this.renderSatellites(gameState.satellites);
+    this.renderParticles(gameState.particles || []);
 
     // Render damage numbers
     for (const dmg of gameState.damageNumbers) {
@@ -142,5 +158,7 @@ export class Renderer {
         gameState.canPlace
       );
     }
+
+    this.ctx.restore();
   }
 }
