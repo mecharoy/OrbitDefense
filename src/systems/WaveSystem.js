@@ -2,6 +2,8 @@ import {
   WAVE_DELAY,
   BASE_ENEMIES_PER_WAVE,
   ENEMY_INCREASE_PER_WAVE,
+  METEOR_SPAWN_CHANCE,
+  METEOR_MIN_WAVE,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   CENTER_X,
@@ -31,6 +33,13 @@ export class WaveSystem {
 
     for (let i = 0; i < enemyCount; i++) {
       enemies.push(this.generateEnemy());
+    }
+
+    // Add meteor if conditions are met
+    if (this.currentWave >= METEOR_MIN_WAVE && Math.random() < METEOR_SPAWN_CHANCE) {
+      const meteorData = this.generateMeteor();
+      enemies.push(meteorData);
+      this.enemiesRemaining++;
     }
 
     return enemies;
@@ -74,6 +83,17 @@ export class WaveSystem {
       y: spawnData.y,
       type: type,
       pattern: pattern
+    };
+  }
+
+  generateMeteor() {
+    const spawnData = this.generateSpawnPosition();
+
+    return {
+      x: spawnData.x,
+      y: spawnData.y,
+      type: 'meteor',
+      pattern: 'straight' // Meteors always move straight
     };
   }
 

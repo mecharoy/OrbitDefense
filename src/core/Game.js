@@ -13,6 +13,8 @@ import {
   INITIAL_HEALTH,
   PASSIVE_ENERGY_RATE,
   SATELLITE_COST,
+  PLANET_EXPANSION_RATE,
+  METEOR_DAMAGE_TO_SATELLITE,
   CENTER_X,
   CENTER_Y
 } from '../utils/constants.js';
@@ -186,6 +188,11 @@ export class Game {
   startNextWave() {
     const enemyData = this.waveSystem.startWave();
 
+    // Expand planet with each wave
+    if (this.waveSystem.currentWave > 1) {
+      this.planet.expandRadius(PLANET_EXPANSION_RATE);
+    }
+
     // Show wave notification
     this.showWaveNotification(this.waveSystem.currentWave);
 
@@ -304,9 +311,16 @@ export class Game {
 
       // Check if reached planet
       if (enemy.reachedPlanet) {
-        this.planet.takeDamage(10);
+        const damage = enemy.isMeteor ? 30 : 10;
+        this.planet.takeDamage(damage);
         enemy.destroy();
         this.waveSystem.enemyDestroyed();
+
+        // Extra screen shake for meteor impact
+        if (enemy.isMeteor) {
+          this.addScreenShake(12, 0.4);
+          this.particleSystem.createExplosion(enemy.x, enemy.y, '#ff8800', 40);
+        }
 
         if (this.planet.health <= 0) {
           this.gameOver();
@@ -323,9 +337,13 @@ export class Game {
     // Check collisions
     this.checkCollisions();
 
+    // Check meteor-satellite collisions
+    this.checkMeteorSatelliteCollisions();
+
     // Remove inactive entities
     this.projectiles = this.projectiles.filter(p => p.active);
     this.enemies = this.enemies.filter(e => e.active);
+    this.satellites = this.satellites.filter(s => s.active);
 
     // Update damage numbers
     for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
@@ -389,6 +407,41 @@ export class Game {
 
         if (hitEnemies.length > 0) {
           this.addScreenShake(8, 0.3);
+        }
+      }
+    }
+  }
+
+  checkMeteorSatelliteCollisions() {
+    for (const enemy of this.enemies) {
+      if (!enemy.active || !enemy.isMeteor) continue;
+
+      for (const satellite of this.satellites) {
+        if (!satellite.active) continue;
+
+        const dist = distance(enemy.x, enemy.y, satellite.x, satellite.y);
+        if (dist < enemy.radius + satellite.radius) {
+          // Meteor damages satellite
+          const destroyed = satellite.takeDamage(METEOR_DAMAGE_TO_SATELLITE);
+          this.addDamageNumber(satellite.x, satellite.y, METEOR_DAMAGE_TO_SATELLITE);
+          this.particleSystem.createImpact(satellite.x, satellite.y, '#ff8800', 15);
+          this.addScreenShake(6, 0.25);
+
+          if (destroyed) {
+            // Satellite destroyed
+            this.particleSystem.createExplosion(satellite.x, satellite.y, satellite.getColor(), 30);
+            this.addScreenShake(8, 0.3);
+          }
+
+          // Meteor also takes damage
+          const meteorKilled = enemy.takeDamage(50);
+          this.addDamageNumber(enemy.x, enemy.y, 50);
+
+          if (meteorKilled) {
+            this.enemyDestroyed(enemy);
+            this.particleSystem.createExplosion(enemy.x, enemy.y, enemy.color, 35);
+            this.addScreenShake(10, 0.35);
+          }
         }
       }
     }

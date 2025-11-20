@@ -1,12 +1,18 @@
 import { Entity } from './Entity.js';
-import { PLANET_RADIUS, CENTER_X, CENTER_Y } from '../utils/constants.js';
+import { PLANET_RADIUS, CENTER_X, CENTER_Y, MAX_PLANET_RADIUS } from '../utils/constants.js';
 
 export class Planet extends Entity {
   constructor() {
     super(CENTER_X, CENTER_Y);
     this.radius = PLANET_RADIUS;
+    this.initialRadius = PLANET_RADIUS;
+    this.maxRadius = MAX_PLANET_RADIUS;
     this.health = 100;
     this.maxHealth = 100;
+  }
+
+  expandRadius(amount) {
+    this.radius = Math.min(this.radius + amount, this.maxRadius);
   }
 
   takeDamage(amount) {
