@@ -77,6 +77,22 @@ export class Satellite extends Entity {
     }
   }
 
+  activateShield(currentTime) {
+    // Shield consumes ammo when activated (not on every frame)
+    if (this.canFire(currentTime)) {
+      this.lastFireTime = currentTime;
+      this.ammo--;
+      this.shieldActive = true;
+
+      // Destroy satellite if out of ammo
+      if (this.ammo <= 0) {
+        this.destroy();
+      }
+      return true;
+    }
+    return false;
+  }
+
   takeDamage(amount) {
     this.health -= amount;
     this.flashTime = Date.now();

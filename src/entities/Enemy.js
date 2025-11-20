@@ -31,6 +31,10 @@ export class Enemy extends Entity {
 
     // Visual effects
     this.flashTime = 0;
+
+    // Shield effects
+    this.slowedByShield = false;
+    this.shieldDamageAccumulator = 0;
   }
 
   takeDamage(amount) {
@@ -83,13 +87,15 @@ export class Enemy extends Entity {
 
   updateStraight(deltaTime) {
     const angle = calculateAngle(this.x, this.y, this.targetX, this.targetY);
-    this.x += Math.cos(angle) * this.speed * deltaTime;
-    this.y += Math.sin(angle) * this.speed * deltaTime;
+    const speedMultiplier = this.slowedByShield ? 0.5 : 1;
+    this.x += Math.cos(angle) * this.speed * speedMultiplier * deltaTime;
+    this.y += Math.sin(angle) * this.speed * speedMultiplier * deltaTime;
   }
 
   updateSpiral(deltaTime) {
-    this.angle += this.spiralSpeed * deltaTime;
-    this.currentRadius = Math.max(this.currentRadius - this.speed * deltaTime, PLANET_RADIUS);
+    const speedMultiplier = this.slowedByShield ? 0.5 : 1;
+    this.angle += this.spiralSpeed * speedMultiplier * deltaTime;
+    this.currentRadius = Math.max(this.currentRadius - this.speed * speedMultiplier * deltaTime, PLANET_RADIUS);
 
     this.x = CENTER_X + Math.cos(this.angle) * this.currentRadius;
     this.y = CENTER_Y + Math.sin(this.angle) * this.currentRadius;
@@ -98,9 +104,10 @@ export class Enemy extends Entity {
   updateZigzag(deltaTime) {
     const baseAngle = calculateAngle(this.x, this.y, this.targetX, this.targetY);
     const zigzag = Math.sin(Date.now() / 200) * 0.5;
+    const speedMultiplier = this.slowedByShield ? 0.5 : 1;
 
-    this.x += Math.cos(baseAngle + zigzag) * this.speed * deltaTime;
-    this.y += Math.sin(baseAngle + zigzag) * this.speed * deltaTime;
+    this.x += Math.cos(baseAngle + zigzag) * this.speed * speedMultiplier * deltaTime;
+    this.y += Math.sin(baseAngle + zigzag) * this.speed * speedMultiplier * deltaTime;
   }
 
   render(ctx) {

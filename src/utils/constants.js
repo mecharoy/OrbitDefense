@@ -20,6 +20,7 @@ export const SATELLITE_RANGE = {
   missile: 200,
   shield: 100
 };
+export const SHIELD_SLOW_EFFECT = 0.5; // Enemies move at 50% speed in shield field
 export const SATELLITE_FIRE_RATE = {
   laser: 500,   // milliseconds
   missile: 1500,
@@ -28,7 +29,7 @@ export const SATELLITE_FIRE_RATE = {
 export const SATELLITE_DAMAGE = {
   laser: 20,
   missile: 50,
-  shield: 0
+  shield: 5  // Damage per second to enemies in shield field
 };
 export const SATELLITE_COST = {
   laser: 20,
@@ -49,11 +50,11 @@ export const METEOR_DAMAGE_TO_SATELLITE = 50;
 
 // Enemies
 export const ENEMY_TYPES = {
-  basic: { health: 50, speed: 30, reward: 10, color: '#f00' },
-  fast: { health: 30, speed: 60, reward: 15, color: '#ff0' },
-  tank: { health: 100, speed: 20, reward: 25, color: '#f0f' },
-  shielded: { health: 80, speed: 35, reward: 30, color: '#0ff', hasShield: true },
-  meteor: { health: 150, speed: 120, reward: 50, color: '#fa0', isMeteor: true, damageOnContact: 30 }
+  basic: { health: 80, speed: 30, reward: 10, color: '#f00' },
+  fast: { health: 50, speed: 60, reward: 15, color: '#ff0' },
+  tank: { health: 150, speed: 20, reward: 25, color: '#f0f' },
+  shielded: { health: 120, speed: 35, reward: 30, color: '#0ff', hasShield: true },
+  meteor: { health: 200, speed: 120, reward: 50, color: '#fa0', isMeteor: true, damageOnContact: 30 }
 };
 export const METEOR_SPAWN_CHANCE = 0.4; // 40% chance per wave (increased visibility)
 export const METEOR_MIN_WAVE = 2; // Meteors start appearing from wave 2 (earlier)

@@ -13,6 +13,7 @@ import {
   INITIAL_HEALTH,
   PASSIVE_ENERGY_RATE,
   SATELLITE_COST,
+  SATELLITE_DAMAGE,
   PLANET_EXPANSION_RATE,
   METEOR_DAMAGE_TO_SATELLITE,
   ENEMY_HEALTH_SCALING,
@@ -323,6 +324,52 @@ export class Game {
 
             this.projectiles.push(projectile);
           }
+        }
+      }
+    }
+
+    // Reset shield effects on all enemies
+    for (const enemy of this.enemies) {
+      enemy.slowedByShield = false;
+    }
+
+    // Process shield satellites
+    for (const satellite of this.satellites) {
+      if (!satellite.active || satellite.weaponType !== 'shield') continue;
+
+      const enemiesInRange = this.collisionSystem.checkSatelliteInRange(satellite, this.enemies);
+
+      if (enemiesInRange.length > 0) {
+        // Activate shield (consumes ammo periodically)
+        const activated = satellite.activateShield(currentTime);
+
+        // Apply effects to enemies in range
+        for (const enemy of enemiesInRange) {
+          // Slow down enemy
+          enemy.slowedByShield = true;
+
+          // Accumulate damage over time
+          enemy.shieldDamageAccumulator += SATELLITE_DAMAGE.shield * deltaTime;
+
+          // Apply damage when accumulator reaches 1
+          if (enemy.shieldDamageAccumulator >= 1) {
+            const damage = Math.floor(enemy.shieldDamageAccumulator);
+            enemy.shieldDamageAccumulator -= damage;
+
+            const killed = enemy.takeDamage(damage);
+            this.addDamageNumber(enemy.x, enemy.y, damage);
+
+            if (killed) {
+              this.enemyDestroyed(enemy);
+              this.particleSystem.createExplosion(enemy.x, enemy.y, enemy.color, 20);
+              this.addScreenShake(2, 0.1);
+            }
+          }
+        }
+
+        // Visual effect when shield is active
+        if (activated && enemiesInRange.length > 0) {
+          this.particleSystem.createImpact(satellite.x, satellite.y, '#00f', 5);
         }
       }
     }
