@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Orbit Defense - Strategic space defense game with orbital mechanics">
+  <title>Orbit Defense</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+    }
+
+    #gameCanvas {
+      border: 2px solid #333;
+      background: #000;
+      cursor: crosshair;
+      max-width: 100vw;
+      max-height: 100vh;
+    }
+
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: #0f0;
+      font-size: 18px;
+      text-shadow: 0 0 10px #0f0;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+
+    .control-btn {
+      background: rgba(0, 255, 0, 0.2);
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 10px 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-shadow: 0 0 5px #0f0;
+    }
+
+    .control-btn:hover {
+      background: rgba(0, 255, 0, 0.4);
+      box-shadow: 0 0 20px #0f0;
+    }
+
+    .control-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #tooltip {
+      position: absolute;
+      background: rgba(0, 0, 0, 0.9);
+      border: 2px solid #0f0;
+      color: #0f0;
+      padding: 10px;
+      font-size: 12px;
+      pointer-events: none;
+      display: none;
+      z-index: 20;
+      max-width: 200px;
+    }
+
+    #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.95);
+      border: 3px solid #f00;
+      color: #f00;
+      padding: 40px;
+      text-align: center;
+      display: none;
+      z-index: 30;
+      box-shadow: 0 0 30px #f00;
+    }
+
+    #gameOver h2 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      text-shadow: 0 0 10px #f00;
+    }
+
+    #gameOver button {
+      margin-top: 20px;
+      background: rgba(255, 0, 0, 0.2);
+      border: 2px solid #f00;
+      color: #f00;
+      padding: 15px 30px;
+      font-family: 'Courier New', monospace;
+      font-size: 18px;
+      cursor: pointer;
+      text-shadow: 0 0 5px #f00;
+    }
+
+    #gameOver button:hover {
+      background: rgba(255, 0, 0, 0.4);
+      box-shadow: 0 0 20px #f00;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1200" height="800"></canvas>
+
+  <div id="ui">
+    <div id="stats">
+      <div>Energy: <span id="energy">100</span></div>
+      <div>Score: <span id="score">0</span></div>
+      <div>Wave: <span id="wave">1</span></div>
+      <div>Health: <span id="health">100</span></div>
+    </div>
+  </div>
+
+  <div id="controls">
+    <button class="control-btn" id="laserBtn" data-weapon="laser">
+      Laser [L] - 20E
+    </button>
+    <button class="control-btn" id="missileBtn" data-weapon="missile">
+      Missile [M] - 50E
+    </button>
+    <button class="control-btn" id="shieldBtn" data-weapon="shield">
+      Shield [S] - 80E
+    </button>
+    <button class="control-btn" id="pauseBtn">
+      Pause [P]
+    </button>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <div id="gameOver">
+    <h2>GAME OVER</h2>
+    <p>Final Score: <span id="finalScore">0</span></p>
+    <p>Waves Survived: <span id="finalWave">0</span></p>
+    <button id="restartBtn">RESTART</button>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

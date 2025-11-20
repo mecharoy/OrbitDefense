@@ -1,0 +1,18 @@
+{
+  "name": "orbit-defense",
+  "version": "1.0.0",
+  "description": "A strategic space defense game with orbital mechanics",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "deploy": "vite build && vercel --prod"
+  },
+  "keywords": ["game", "orbital", "defense", "space"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
