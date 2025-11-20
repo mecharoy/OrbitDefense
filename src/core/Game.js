@@ -15,6 +15,10 @@ import {
   SATELLITE_COST,
   PLANET_EXPANSION_RATE,
   METEOR_DAMAGE_TO_SATELLITE,
+  ENEMY_HEALTH_SCALING,
+  ENEMY_SPEED_SCALING,
+  ENEMY_DAMAGE_SCALING,
+  ENEMY_TYPES,
   CENTER_X,
   CENTER_Y
 } from '../utils/constants.js';
@@ -188,10 +192,9 @@ export class Game {
   startNextWave() {
     const enemyData = this.waveSystem.startWave();
 
-    // Expand planet with each wave
-    if (this.waveSystem.currentWave > 1) {
-      this.planet.expandRadius(PLANET_EXPANSION_RATE);
-    }
+    // Set planet growth rate based on wave (grows faster in later waves)
+    const growthMultiplier = Math.min(this.waveSystem.currentWave / 10, 1.5);
+    this.planet.setGrowthRate(PLANET_EXPANSION_RATE * growthMultiplier);
 
     // Show wave notification
     this.showWaveNotification(this.waveSystem.currentWave);
@@ -203,23 +206,31 @@ export class Game {
       enemy.type = data.type;
       enemy.movementPattern = data.pattern;
 
-      const typeData = enemy.constructor.name === 'Enemy'
-        ? require('../utils/constants.js').ENEMY_TYPES[data.type]
-        : {};
+      // Get base stats
+      const baseTypeData = ENEMY_TYPES[data.type];
+
+      // Apply wave scaling
+      const waveNumber = this.waveSystem.currentWave;
+      const healthMultiplier = Math.pow(ENEMY_HEALTH_SCALING, waveNumber - 1);
+      const speedMultiplier = Math.pow(ENEMY_SPEED_SCALING, waveNumber - 1);
+      const damageMultiplier = Math.pow(ENEMY_DAMAGE_SCALING, waveNumber - 1);
 
       Object.assign(enemy, {
         active: true,
-        maxHealth: typeData.health || 50,
-        health: typeData.health || 50,
-        speed: typeData.speed || 30,
-        reward: typeData.reward || 10,
-        color: typeData.color || '#f00',
-        hasShield: typeData.hasShield || false,
-        shieldActive: typeData.hasShield || false,
+        maxHealth: Math.floor(baseTypeData.health * healthMultiplier),
+        health: Math.floor(baseTypeData.health * healthMultiplier),
+        speed: baseTypeData.speed * speedMultiplier,
+        reward: baseTypeData.reward,
+        color: baseTypeData.color,
+        hasShield: baseTypeData.hasShield || false,
+        shieldActive: baseTypeData.hasShield || false,
+        isMeteor: baseTypeData.isMeteor || false,
+        damageOnContact: baseTypeData.damageOnContact ? Math.floor(baseTypeData.damageOnContact * damageMultiplier) : 0,
         reachedPlanet: false,
         targetX: CENTER_X,
         targetY: CENTER_Y,
-        currentRadius: distance(data.x, data.y, CENTER_X, CENTER_Y)
+        currentRadius: distance(data.x, data.y, CENTER_X, CENTER_Y),
+        trailParticles: []
       });
 
       this.enemies.push(enemy);
@@ -272,6 +283,9 @@ export class Game {
     // Update particles
     this.particleSystem.update(deltaTime);
 
+    // Update planet (gradual expansion)
+    this.planet.update(deltaTime);
+
     // Update satellites
     for (const satellite of this.satellites) {
       satellite.update(deltaTime);
@@ -323,7 +337,12 @@ export class Game {
 
       // Check if reached planet
       if (enemy.reachedPlanet) {
-        const damage = enemy.isMeteor ? 30 : 10;
+        // Use scaled damage based on wave
+        const baseDamage = enemy.isMeteor ? 30 : 10;
+        const waveNumber = this.waveSystem.currentWave;
+        const damageMultiplier = Math.pow(ENEMY_DAMAGE_SCALING, waveNumber - 1);
+        const damage = Math.floor(baseDamage * damageMultiplier);
+
         this.planet.takeDamage(damage);
         enemy.destroy();
         this.waveSystem.enemyDestroyed();

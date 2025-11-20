@@ -6,7 +6,7 @@ export const CENTER_Y = CANVAS_HEIGHT / 2;
 
 // Planet
 export const PLANET_RADIUS = 50;
-export const PLANET_EXPANSION_RATE = 2; // pixels per wave (more visible)
+export const PLANET_EXPANSION_RATE = 0.02; // pixels per second (gradual growth)
 export const MAX_PLANET_RADIUS = 100;
 
 // Orbits
@@ -55,8 +55,13 @@ export const ENEMY_TYPES = {
   shielded: { health: 80, speed: 35, reward: 30, color: '#0ff', hasShield: true },
   meteor: { health: 150, speed: 120, reward: 50, color: '#fa0', isMeteor: true, damageOnContact: 30 }
 };
-export const METEOR_SPAWN_CHANCE = 0.15; // 15% chance per wave
-export const METEOR_MIN_WAVE = 3; // Meteors start appearing from wave 3
+export const METEOR_SPAWN_CHANCE = 0.4; // 40% chance per wave (increased visibility)
+export const METEOR_MIN_WAVE = 2; // Meteors start appearing from wave 2 (earlier)
+
+// Enemy scaling per wave
+export const ENEMY_HEALTH_SCALING = 1.15; // 15% more health per wave
+export const ENEMY_SPEED_SCALING = 1.08; // 8% faster per wave
+export const ENEMY_DAMAGE_SCALING = 1.1; // 10% more damage per wave
 
 // Projectiles
 export const PROJECTILE_SPEED = 200;

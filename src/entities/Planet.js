@@ -9,6 +9,18 @@ export class Planet extends Entity {
     this.maxRadius = MAX_PLANET_RADIUS;
     this.health = 100;
     this.maxHealth = 100;
+    this.growthRate = 0; // Will be set based on game progress
+  }
+
+  update(deltaTime) {
+    // Gradually expand planet
+    if (this.growthRate > 0 && this.radius < this.maxRadius) {
+      this.radius = Math.min(this.radius + this.growthRate * deltaTime, this.maxRadius);
+    }
+  }
+
+  setGrowthRate(rate) {
+    this.growthRate = rate;
   }
 
   expandRadius(amount) {
