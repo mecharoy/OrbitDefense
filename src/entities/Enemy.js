@@ -15,9 +15,12 @@ export class Enemy extends Entity {
     this.color = typeData.color;
     this.hasShield = typeData.hasShield || false;
     this.shieldActive = this.hasShield;
+    this.isMeteor = typeData.isMeteor || false;
+    this.damageOnContact = typeData.damageOnContact || 0;
 
-    this.radius = 10;
+    this.radius = this.isMeteor ? 15 : 10;
     this.movementPattern = movementPattern;
+    this.trailParticles = [];
 
     // Movement-specific properties
     this.targetX = CENTER_X;
@@ -28,6 +31,10 @@ export class Enemy extends Entity {
 
     // Visual effects
     this.flashTime = 0;
+
+    // Shield effects
+    this.slowedByShield = false;
+    this.shieldDamageAccumulator = 0;
   }
 
   takeDamage(amount) {
@@ -47,6 +54,18 @@ export class Enemy extends Entity {
   }
 
   update(deltaTime) {
+    // Store previous position for trail
+    if (this.isMeteor) {
+      this.trailParticles.push({ x: this.x, y: this.y, alpha: 1 });
+      if (this.trailParticles.length > 10) {
+        this.trailParticles.shift();
+      }
+      // Fade trail
+      for (const particle of this.trailParticles) {
+        particle.alpha -= deltaTime * 2;
+      }
+    }
+
     switch (this.movementPattern) {
       case 'straight':
         this.updateStraight(deltaTime);
@@ -68,13 +87,15 @@ export class Enemy extends Entity {
 
   updateStraight(deltaTime) {
     const angle = calculateAngle(this.x, this.y, this.targetX, this.targetY);
-    this.x += Math.cos(angle) * this.speed * deltaTime;
-    this.y += Math.sin(angle) * this.speed * deltaTime;
+    const speedMultiplier = this.slowedByShield ? 0.5 : 1;
+    this.x += Math.cos(angle) * this.speed * speedMultiplier * deltaTime;
+    this.y += Math.sin(angle) * this.speed * speedMultiplier * deltaTime;
   }
 
   updateSpiral(deltaTime) {
-    this.angle += this.spiralSpeed * deltaTime;
-    this.currentRadius = Math.max(this.currentRadius - this.speed * deltaTime, PLANET_RADIUS);
+    const speedMultiplier = this.slowedByShield ? 0.5 : 1;
+    this.angle += this.spiralSpeed * speedMultiplier * deltaTime;
+    this.currentRadius = Math.max(this.currentRadius - this.speed * speedMultiplier * deltaTime, PLANET_RADIUS);
 
     this.x = CENTER_X + Math.cos(this.angle) * this.currentRadius;
     this.y = CENTER_Y + Math.sin(this.angle) * this.currentRadius;
@@ -83,9 +104,10 @@ export class Enemy extends Entity {
   updateZigzag(deltaTime) {
     const baseAngle = calculateAngle(this.x, this.y, this.targetX, this.targetY);
     const zigzag = Math.sin(Date.now() / 200) * 0.5;
+    const speedMultiplier = this.slowedByShield ? 0.5 : 1;
 
-    this.x += Math.cos(baseAngle + zigzag) * this.speed * deltaTime;
-    this.y += Math.sin(baseAngle + zigzag) * this.speed * deltaTime;
+    this.x += Math.cos(baseAngle + zigzag) * this.speed * speedMultiplier * deltaTime;
+    this.y += Math.sin(baseAngle + zigzag) * this.speed * speedMultiplier * deltaTime;
   }
 
   render(ctx) {
@@ -93,6 +115,31 @@ export class Enemy extends Entity {
 
     // Flash effect when hit
     const isFlashing = Date.now() - this.flashTime < 100;
+
+    // Draw meteor trail
+    if (this.isMeteor && this.trailParticles.length > 0) {
+      for (let i = 0; i < this.trailParticles.length; i++) {
+        const particle = this.trailParticles[i];
+        if (particle.alpha > 0) {
+          ctx.globalAlpha = particle.alpha * 0.6;
+          const size = (i / this.trailParticles.length) * this.radius;
+
+          const trailGradient = ctx.createRadialGradient(
+            particle.x, particle.y, 0,
+            particle.x, particle.y, size * 2
+          );
+          trailGradient.addColorStop(0, '#ff8800');
+          trailGradient.addColorStop(0.5, '#ff4400');
+          trailGradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+
+          ctx.fillStyle = trailGradient;
+          ctx.beginPath();
+          ctx.arc(particle.x, particle.y, size * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
 
     // Draw shield if active
     if (this.shieldActive) {
@@ -105,14 +152,15 @@ export class Enemy extends Entity {
       ctx.globalAlpha = 1;
     }
 
-    // Enemy glow
-    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 2);
+    // Enemy glow - enhanced for meteors
+    const glowRadius = this.isMeteor ? this.radius * 3 : this.radius * 2;
+    const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, glowRadius);
     gradient.addColorStop(0, this.color);
     gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+    ctx.arc(this.x, this.y, glowRadius, 0, Math.PI * 2);
     ctx.fill();
 
     // Enemy body
@@ -121,12 +169,41 @@ export class Enemy extends Entity {
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Enemy detail
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
-    ctx.stroke();
+    // Special meteor effects
+    if (this.isMeteor) {
+      // Jagged edges for rocky appearance
+      ctx.strokeStyle = '#a00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const points = 8;
+      for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+        const radiusVar = this.radius * (0.8 + Math.random() * 0.4);
+        const px = this.x + Math.cos(angle) * radiusVar;
+        const py = this.y + Math.sin(angle) * radiusVar;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      // Pulsing glow
+      const pulseAlpha = 0.3 + Math.sin(Date.now() / 100) * 0.2;
+      ctx.globalAlpha = pulseAlpha;
+      ctx.strokeStyle = '#ff0';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius + 3, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    } else {
+      // Enemy detail (non-meteor)
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius * 0.7, 0, Math.PI * 2);
+      ctx.stroke();
+    }
 
     // Health bar
     if (this.health < this.maxHealth) {
@@ -139,7 +216,7 @@ export class Enemy extends Entity {
       ctx.fillRect(barX, barY, barWidth, barHeight);
 
       const healthPercent = this.health / this.maxHealth;
-      ctx.fillStyle = '#f00';
+      ctx.fillStyle = this.isMeteor ? '#ff8800' : '#f00';
       ctx.fillRect(barX, barY, barWidth * healthPercent, barHeight);
     }
 

@@ -6,6 +6,8 @@ export const CENTER_Y = CANVAS_HEIGHT / 2;
 
 // Planet
 export const PLANET_RADIUS = 50;
+export const PLANET_EXPANSION_RATE = 0.02; // pixels per second (gradual growth)
+export const MAX_PLANET_RADIUS = 100;
 
 // Orbits
 export const ORBIT_RADII = [120, 180, 240, 300, 360];
@@ -18,6 +20,7 @@ export const SATELLITE_RANGE = {
   missile: 200,
   shield: 100
 };
+export const SHIELD_SLOW_EFFECT = 0.5; // Enemies move at 50% speed in shield field
 export const SATELLITE_FIRE_RATE = {
   laser: 500,   // milliseconds
   missile: 1500,
@@ -26,21 +29,46 @@ export const SATELLITE_FIRE_RATE = {
 export const SATELLITE_DAMAGE = {
   laser: 20,
   missile: 50,
-  shield: 0
+  shield: 5  // Damage per second to enemies in shield field
 };
-export const SATELLITE_COST = {
-  laser: 20,
-  missile: 50,
+export const SATELLITE_BASE_COST = {
+  laser: 15,    // Start cheaper
+  missile: 35,  // Start cheaper
   shield: 80
 };
+export const SATELLITE_COST_SCALING = {
+  laser: 1.12,    // 12% increase per wave
+  missile: 1.15,  // 15% increase per wave
+  shield: 1.0     // Shield cost stays constant
+};
+export const SHIELD_ORBIT_LIMITS = [2, 3, 999, 999, 999]; // Max shields per orbit (2 on closest, 3 on second, unlimited on rest)
+export const SATELLITE_MAX_HEALTH = {
+  laser: 100,
+  missile: 150,
+  shield: 200
+};
+export const SATELLITE_MAX_AMMO = {
+  laser: 50,    // 50 shots
+  missile: 20,  // 20 shots
+  shield: 30    // 30 shield activations
+};
+export const METEOR_DAMAGE_TO_SATELLITE = 50;
 
 // Enemies
 export const ENEMY_TYPES = {
-  basic: { health: 50, speed: 30, reward: 10, color: '#f00' },
-  fast: { health: 30, speed: 60, reward: 15, color: '#ff0' },
-  tank: { health: 100, speed: 20, reward: 25, color: '#f0f' },
-  shielded: { health: 80, speed: 35, reward: 30, color: '#0ff', hasShield: true }
+  basic: { health: 80, speed: 30, reward: 10, color: '#f00' },
+  fast: { health: 50, speed: 60, reward: 15, color: '#ff0' },
+  tank: { health: 150, speed: 20, reward: 25, color: '#f0f' },
+  shielded: { health: 120, speed: 35, reward: 30, color: '#0ff', hasShield: true },
+  meteor: { health: 200, speed: 120, reward: 50, color: '#fa0', isMeteor: true, damageOnContact: 30 }
 };
+export const METEOR_SPAWN_CHANCE = 0.4; // 40% chance per wave (increased visibility)
+export const METEOR_MIN_WAVE = 2; // Meteors start appearing from wave 2 (earlier)
+
+// Enemy scaling per wave
+export const ENEMY_HEALTH_SCALING = 1.15; // 15% more health per wave
+export const ENEMY_SPEED_SCALING = 1.08; // 8% faster per wave
+export const ENEMY_DAMAGE_SCALING = 1.1; // 10% more damage per wave
 
 // Projectiles
 export const PROJECTILE_SPEED = 200;
