@@ -58,15 +58,13 @@ export class TimeManager {
   recordInput(inputState) {
     if (!this.isRunning || this.isPaused) return;
 
-    // Only record if there's meaningful input
+    // Record input every frame for accurate replay
     const keys = Array.from(inputState.keys || []);
-    if (keys.length > 0 || inputState.action) {
-      this.currentRecording.push({
-        tick: this.currentTick,
-        keys: keys,
-        action: inputState.action || false
-      });
-    }
+    this.currentRecording.push({
+      tick: this.currentTick,
+      keys: keys,
+      action: inputState.action || false
+    });
   }
 
   /**
@@ -79,8 +77,21 @@ export class TimeManager {
     if (loopIndex >= this.loopHistory.length) return null;
 
     const loopData = this.loopHistory[loopIndex];
-    // Find the input frame for this tick
-    return loopData.find(frame => frame.tick === tick) || null;
+
+    // Find input frame for this tick (or closest one before it)
+    let bestMatch = null;
+    for (const frame of loopData) {
+      if (frame.tick === tick) {
+        return frame; // Exact match
+      }
+      if (frame.tick < tick) {
+        if (!bestMatch || frame.tick > bestMatch.tick) {
+          bestMatch = frame;
+        }
+      }
+    }
+
+    return bestMatch;
   }
 
   /**

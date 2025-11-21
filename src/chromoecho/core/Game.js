@@ -340,12 +340,12 @@ export class ChromoEchoGame {
       return;
     }
 
+    // Record current input BEFORE updating time (so tick matches)
+    this.timeManager.recordInput(this.inputHandler.getInputState());
+
     // Update time manager
     const deltaMs = deltaTime * 1000;
     this.timeManager.update(deltaMs);
-
-    // Record current input
-    this.timeManager.recordInput(this.inputHandler.getInputState());
 
     // Get player movement
     const movement = this.inputHandler.getMovementVector();
