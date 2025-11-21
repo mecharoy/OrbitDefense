@@ -1,3 +1,19 @@
+Development & Deployment Best Practices1. Code Quality & StructureECS Pattern (Entity-Component-System)Instead of deep OOP inheritance (e.g., class Guard extends Enemy extends Actor), use composition.Entities: Just IDs (e.g., Entity_1).Components: Data containers (e.g., Position, Velocity, Sprite, InputRecorder).Systems: Logic processors (e.g., MovementSystem updates all entities with Position and Velocity).Why? This makes managing the "Ghosts" significantly easier. The Ghost is just an entity with a InputReplay component instead of a InputListener component.Deterministic StateFor the time-loop replay to work, your game logic must be deterministic.Fixed Time Step: Do not rely on variable deltaTime for physics simulation. Use a fixed time step accumulator (e.g., 1/60th of a second) to ensure the ghost moves exactly the same distance as the player did, regardless of frame rate fluctuations.Avoid Randomness: Do not use Math.random() for anything affecting gameplay during the level. If you must, use a seeded random number generator so the "random" guard patrol is identical across loops.Object PoolingBrowser games suffer from Garbage Collection (GC) pauses.Never create new objects inside the game loop (e.g., new Bullet()).Pre-allocate: Create a pool of 50 bullets at start. When one is fired, activate an existing one. When it hits, deactivate it.2. Git & Version Control StrategyBranching Modelmain: Production-ready code. Vercel automatically deploys this to the live URL.dev: Staging branch. Vercel creates a "Preview Deployment" for this.feat/mechanic-name: Feature branches (e.g., feat/time-rewind, feat/guard-ai).Commit Standards (Conventional Commits)Use strict naming for clarity in history:feat: add rewinding logicfix: resolve collision bug with wallsstyle: update canvas background colorrefactor: optimize collision detection algorithm3. Vercel Deployment Configurationvercel.jsonAdd a configuration file to the root to handle routing, especially if you implement a Single Page Application (SPA) router later.{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}
+Environment VariablesNever hardcode API keys or debug flags. Use Vercel's Environment Variables UI.NEXT_PUBLIC_DEBUG_MODE=falseGAME_VERSION=1.0.24. Performance OptimizationCanvas Layers: Use multiple <canvas> elements layered on top of each other.Layer 1 (Background): Static floor tiles (drawn once).Layer 2 (Main): Dynamic entities (player, guards) cleared and redrawn every frame.Layer 3 (UI): HUD elements (timer, loop count).Off-screen Canvas: Pre-render complex sprites or procedural geometry to an off-screen canvas and draw that as an image to the main canvas.
+
+
 # Browser Game Development Best Practices
 
 ## Performance Optimization
@@ -57,17 +73,4 @@ Inclusive design expands your audience. Provide keyboard alternatives for all co
 Screen reader compatibility where applicable. Provide text alternatives for important visual information. Use ARIA labels for interactive elements. Announce important game events programmatically.
 
 
-Development & Deployment Best Practices1. Code Quality & StructureECS Pattern (Entity-Component-System)Instead of deep OOP inheritance (e.g., class Guard extends Enemy extends Actor), use composition.Entities: Just IDs (e.g., Entity_1).Components: Data containers (e.g., Position, Velocity, Sprite, InputRecorder).Systems: Logic processors (e.g., MovementSystem updates all entities with Position and Velocity).Why? This makes managing the "Ghosts" significantly easier. The Ghost is just an entity with a InputReplay component instead of a InputListener component.Deterministic StateFor the time-loop replay to work, your game logic must be deterministic.Fixed Time Step: Do not rely on variable deltaTime for physics simulation. Use a fixed time step accumulator (e.g., 1/60th of a second) to ensure the ghost moves exactly the same distance as the player did, regardless of frame rate fluctuations.Avoid Randomness: Do not use Math.random() for anything affecting gameplay during the level. If you must, use a seeded random number generator so the "random" guard patrol is identical across loops.Object PoolingBrowser games suffer from Garbage Collection (GC) pauses.Never create new objects inside the game loop (e.g., new Bullet()).Pre-allocate: Create a pool of 50 bullets at start. When one is fired, activate an existing one. When it hits, deactivate it.2. Git & Version Control StrategyBranching Modelmain: Production-ready code. Vercel automatically deploys this to the live URL.dev: Staging branch. Vercel creates a "Preview Deployment" for this.feat/mechanic-name: Feature branches (e.g., feat/time-rewind, feat/guard-ai).Commit Standards (Conventional Commits)Use strict naming for clarity in history:feat: add rewinding logicfix: resolve collision bug with wallsstyle: update canvas background colorrefactor: optimize collision detection algorithm3. Vercel Deployment Configurationvercel.jsonAdd a configuration file to the root to handle routing, especially if you implement a Single Page Application (SPA) router later.{
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
-      ]
-    }
-  ]
-}
-Environment VariablesNever hardcode API keys or debug flags. Use Vercel's Environment Variables UI.NEXT_PUBLIC_DEBUG_MODE=falseGAME_VERSION=1.0.24. Performance OptimizationCanvas Layers: Use multiple <canvas> elements layered on top of each other.Layer 1 (Background): Static floor tiles (drawn once).Layer 2 (Main): Dynamic entities (player, guards) cleared and redrawn every frame.Layer 3 (UI): HUD elements (timer, loop count).Off-screen Canvas: Pre-render complex sprites or procedural geometry to an off-screen canvas and draw that as an image to the main canvas.
+
