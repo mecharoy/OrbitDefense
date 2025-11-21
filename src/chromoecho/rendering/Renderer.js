@@ -262,16 +262,45 @@ export class ChromoEchoRenderer {
    * Draw ghost (past self)
    */
   drawGhost(ghost) {
-    // Draw trail first
+    // Draw trail as a danger path - touching it causes paradox
+    if (ghost.trail.length > 1) {
+      // Draw connected trail line
+      this.ctx.beginPath();
+      this.ctx.moveTo(
+        this.offsetX + ghost.trail[0].x,
+        this.offsetY + ghost.trail[0].y
+      );
+
+      for (let i = 1; i < ghost.trail.length; i++) {
+        this.ctx.lineTo(
+          this.offsetX + ghost.trail[i].x,
+          this.offsetY + ghost.trail[i].y
+        );
+      }
+
+      // Stroke with glowing effect
+      this.ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
+      this.ctx.lineWidth = ghost.radius * 1.2;
+      this.ctx.lineCap = 'round';
+      this.ctx.lineJoin = 'round';
+      this.ctx.stroke();
+
+      // Inner line
+      this.ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
+      this.ctx.lineWidth = ghost.radius * 0.6;
+      this.ctx.stroke();
+    }
+
+    // Draw trail circles at each point
     for (let i = 0; i < ghost.trail.length; i++) {
       const trail = ghost.trail[i];
-      const px = this.offsetX + trail.x + ghost.glitchOffset.x;
-      const py = this.offsetY + trail.y + ghost.glitchOffset.y;
+      const px = this.offsetX + trail.x;
+      const py = this.offsetY + trail.y;
+      const fade = 1 - (i / ghost.trail.length);
 
-      this.ctx.fillStyle = this.colors.ghostTrail;
-      this.ctx.globalAlpha = trail.alpha * 0.5;
+      this.ctx.fillStyle = `rgba(255, 80, 80, ${0.3 * fade})`;
       this.ctx.beginPath();
-      this.ctx.arc(px, py, ghost.radius * (1 - i * 0.1), 0, Math.PI * 2);
+      this.ctx.arc(px, py, ghost.radius * 0.5, 0, Math.PI * 2);
       this.ctx.fill();
     }
     this.ctx.globalAlpha = 1;

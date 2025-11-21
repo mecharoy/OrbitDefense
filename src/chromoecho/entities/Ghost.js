@@ -29,9 +29,10 @@ export class Ghost {
     this.glitchOffset = { x: 0, y: 0 };
     this.glitchTimer = 0;
 
-    // Trail effect
+    // Trail effect - longer trail for paradox detection
     this.trail = [];
-    this.maxTrailLength = 8;
+    this.maxTrailLength = 30;
+    this.trailInterval = 0;
   }
 
   /**
@@ -41,9 +42,11 @@ export class Ghost {
    * @param {Function} collisionCheck - Collision check function
    */
   update(recordedInput, deltaTime, collisionCheck) {
-    // Update trail
-    if (this.vx !== 0 || this.vy !== 0) {
-      this.trail.unshift({ x: this.x, y: this.y, alpha: this.alpha });
+    // Update trail - add points periodically to create continuous path
+    this.trailInterval += deltaTime;
+    if (this.trailInterval >= 0.05) { // Add trail point every 50ms
+      this.trailInterval = 0;
+      this.trail.unshift({ x: this.x, y: this.y, alpha: 0.6 });
       if (this.trail.length > this.maxTrailLength) {
         this.trail.pop();
       }
@@ -137,6 +140,7 @@ export class Ghost {
     this.isInteracting = false;
     this.isBlocked = false;
     this.trail = [];
+    this.trailInterval = 0;
     this.expectedX = this.startX;
     this.expectedY = this.startY;
   }

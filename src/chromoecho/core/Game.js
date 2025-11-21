@@ -266,27 +266,41 @@ export class ChromoEchoGame {
   }
 
   /**
-   * Check for paradox - any self colliding with another self
+   * Check for paradox - player touching ghost body or trail
    * Returns true if paradox detected
    */
   checkParadox() {
-    const allSelves = [this.player, ...this.ghosts];
+    // Skip check in first few ticks (grace period at start)
+    if (this.timeManager.currentTick < 30) {
+      return false;
+    }
 
-    for (let i = 0; i < allSelves.length; i++) {
-      for (let j = i + 1; j < allSelves.length; j++) {
-        const a = allSelves[i];
-        const b = allSelves[j];
+    const player = this.player;
 
-        const dx = a.x - b.x;
-        const dy = a.y - b.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const minDist = a.radius + b.radius;
+    // Check player against each ghost
+    for (const ghost of this.ghosts) {
+      // Check collision with ghost body
+      const dx = player.x - ghost.x;
+      const dy = player.y - ghost.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      const minDist = player.radius + ghost.radius;
 
-        if (dist < minDist * 0.9) {
+      if (dist < minDist * 0.9) {
+        return true;
+      }
+
+      // Check collision with ghost trail
+      for (const trailPoint of ghost.trail) {
+        const tdx = player.x - trailPoint.x;
+        const tdy = player.y - trailPoint.y;
+        const tdist = Math.sqrt(tdx * tdx + tdy * tdy);
+
+        if (tdist < player.radius + ghost.radius * 0.5) {
           return true;
         }
       }
     }
+
     return false;
   }
 
@@ -324,9 +338,9 @@ export class ChromoEchoGame {
       action: this.inputHandler.actionPressed
     };
 
-    // Update player
+    // Update player (no ghost collision blocking - we check paradox after)
     this.player.update(playerInput, deltaTime, (x, y, r) => {
-      return this.checkCollision(x, y, r) || this.checkGhostCollision(x, y, r);
+      return this.checkCollision(x, y, r);
     });
 
     // Update ghosts (replay recorded inputs)
