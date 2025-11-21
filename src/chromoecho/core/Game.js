@@ -276,9 +276,19 @@ export class ChromoEchoGame {
     }
 
     const player = this.player;
+    const startX = this.level.playerStart.x * this.tileSize + this.tileSize / 2;
+    const startY = this.level.playerStart.y * this.tileSize + this.tileSize / 2;
 
     // Check player against each ghost
     for (const ghost of this.ghosts) {
+      // Skip if ghost is still near start position (hasn't moved yet)
+      const ghostDistFromStart = Math.sqrt(
+        Math.pow(ghost.x - startX, 2) + Math.pow(ghost.y - startY, 2)
+      );
+      if (ghostDistFromStart < this.tileSize * 0.5) {
+        continue;
+      }
+
       // Check collision with ghost body
       const dx = player.x - ghost.x;
       const dy = player.y - ghost.y;
@@ -289,8 +299,15 @@ export class ChromoEchoGame {
         return true;
       }
 
-      // Check collision with ghost trail
+      // Check collision with ghost trail (skip points near start)
       for (const trailPoint of ghost.trail) {
+        const trailDistFromStart = Math.sqrt(
+          Math.pow(trailPoint.x - startX, 2) + Math.pow(trailPoint.y - startY, 2)
+        );
+        if (trailDistFromStart < this.tileSize * 0.5) {
+          continue;
+        }
+
         const tdx = player.x - trailPoint.x;
         const tdy = player.y - trailPoint.y;
         const tdist = Math.sqrt(tdx * tdx + tdy * tdy);
