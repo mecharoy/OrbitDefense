@@ -250,7 +250,7 @@ export class ChromoEchoGame {
   }
 
   /**
-   * Check if player collides with any ghost (paradox detection)
+   * Check if a position collides with any ghost (for movement blocking)
    */
   checkGhostCollision(x, y, radius) {
     for (const ghost of this.ghosts) {
@@ -260,6 +260,31 @@ export class ChromoEchoGame {
 
       if (dist < radius + ghost.radius * 0.8) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Check for paradox - any self colliding with another self
+   * Returns true if paradox detected
+   */
+  checkParadox() {
+    const allSelves = [this.player, ...this.ghosts];
+
+    for (let i = 0; i < allSelves.length; i++) {
+      for (let j = i + 1; j < allSelves.length; j++) {
+        const a = allSelves[i];
+        const b = allSelves[j];
+
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const minDist = a.radius + b.radius;
+
+        if (dist < minDist * 0.9) {
+          return true;
+        }
       }
     }
     return false;
@@ -313,12 +338,12 @@ export class ChromoEchoGame {
         // Ghosts collide with walls but not player (player causes paradox instead)
         return this.checkCollision(x, y, r);
       });
+    }
 
-      // Check if ghost was blocked by player (paradox)
-      if (ghost.isBlocked) {
-        this.timeManager.triggerParadox();
-        return;
-      }
+    // Check for paradox - any self touching another self
+    if (this.checkParadox()) {
+      this.timeManager.triggerParadox();
+      return;
     }
 
     // Update guards
