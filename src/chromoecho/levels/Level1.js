@@ -11,18 +11,18 @@
  * - D: Door
  * - X: Exit
  *
- * #########
- * #P......#
- * #.......#
- * #..O....D
- * #.......#
- * #.......X
- * #.......#
- * #########
+ * ##########
+ * #P...#...#
+ * #....#...#
+ * #....D...#
+ * #....#..X#
+ * #..O.#...#
+ * #....#...#
+ * ##########
  *
  * Solution:
  * Loop 1: Walk to pressure plate, stand on it
- * Loop 2: Walk through now-open door to exit
+ * Loop 2: Walk through now-open door to exit (exit is behind door)
  */
 
 export const Level1 = {
@@ -38,32 +38,32 @@ export const Level1 = {
   loopDuration: 15, // seconds per loop
   maxLoops: 2,
 
-  // Layout: 0 = floor, 1 = wall
+  // Layout: 0 = floor, 1 = wall (wall separates left and right, door is only passage)
   layout: [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Door on right edge
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Exit on right edge
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1], // Door at (5,3) - only way through
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 1, 0, 0, 0, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
   ],
 
   // Player start position (tile coordinates)
   playerStart: { x: 1, y: 1 },
 
-  // Interactive objects
+  // Interactive objects - plate on LEFT side, exit on RIGHT side
   pressurePlates: [
-    { x: 3, y: 3, linkedDoorIds: ['door1'] }
+    { x: 3, y: 5, linkedDoorIds: ['door1'] }
   ],
 
   doors: [
-    { id: 'door1', x: 9, y: 3, orientation: 'vertical' }
+    { id: 'door1', x: 5, y: 3, orientation: 'vertical' }
   ],
 
   exits: [
-    { x: 9, y: 5 }
+    { x: 8, y: 4 }
   ],
 
   // No guards in tutorial level
