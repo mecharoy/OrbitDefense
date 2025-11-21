@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Orbit Defense - Strategic space defense game with orbital mechanics">
-  <title>Orbit Defense</title>
+  <meta name="description" content="Game Arcade - Orbit Defense & ChromoEcho">
+  <title>Game Arcade</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Audiowide&display=swap');
 
     * {
       margin: 0;
@@ -55,6 +55,19 @@
       50% { transform: translateY(-10px); }
     }
 
+    @keyframes glitch {
+      0%, 90%, 100% { transform: translate(0); }
+      92% { transform: translate(-2px, 1px); }
+      94% { transform: translate(2px, -1px); }
+      96% { transform: translate(-1px, -1px); }
+      98% { transform: translate(1px, 1px); }
+    }
+
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
+    }
+
     body {
       background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
       display: flex;
@@ -83,6 +96,185 @@
       opacity: 0.5;
     }
 
+    /* Game Menu Styles */
+    #gameMenu {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      background: radial-gradient(ellipse at center, rgba(10, 14, 39, 0.95) 0%, rgba(9, 10, 15, 0.98) 100%);
+    }
+
+    #gameMenu.hidden {
+      display: none;
+    }
+
+    #menuTitle {
+      font-size: 48px;
+      font-weight: 900;
+      color: #0ff;
+      text-shadow: 0 0 20px #0ff, 0 0 40px #0ff, 0 0 60px #0ff;
+      margin-bottom: 20px;
+      letter-spacing: 5px;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    #menuSubtitle {
+      font-size: 18px;
+      color: #888;
+      margin-bottom: 60px;
+      letter-spacing: 2px;
+    }
+
+    .game-select-container {
+      display: flex;
+      gap: 40px;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .game-card {
+      position: relative;
+      width: 350px;
+      height: 400px;
+      background: linear-gradient(135deg, rgba(20, 30, 50, 0.9), rgba(10, 15, 30, 0.95));
+      border: 3px solid;
+      border-radius: 20px;
+      padding: 30px;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      overflow: hidden;
+    }
+
+    .game-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+      transform: rotate(30deg);
+      transition: all 0.5s ease;
+      opacity: 0;
+    }
+
+    .game-card:hover::before {
+      opacity: 1;
+    }
+
+    .game-card:hover {
+      transform: translateY(-10px) scale(1.02);
+    }
+
+    /* Orbit Defense Card */
+    .game-card.orbit-defense {
+      border-color: #0ff;
+      box-shadow: 0 0 30px rgba(0, 255, 255, 0.3), inset 0 0 30px rgba(0, 255, 255, 0.1);
+    }
+
+    .game-card.orbit-defense:hover {
+      box-shadow: 0 0 50px rgba(0, 255, 255, 0.5), inset 0 0 50px rgba(0, 255, 255, 0.2);
+    }
+
+    .game-card.orbit-defense .game-icon {
+      color: #0ff;
+      text-shadow: 0 0 30px #0ff;
+    }
+
+    /* ChromoEcho Card */
+    .game-card.chromo-echo {
+      border-color: #00D9FF;
+      box-shadow: 0 0 30px rgba(0, 217, 255, 0.3), inset 0 0 30px rgba(0, 217, 255, 0.1);
+      font-family: 'Audiowide', 'Orbitron', monospace;
+    }
+
+    .game-card.chromo-echo:hover {
+      box-shadow: 0 0 50px rgba(0, 217, 255, 0.5), inset 0 0 50px rgba(0, 217, 255, 0.2);
+      animation: glitch 0.3s ease;
+    }
+
+    .game-card.chromo-echo .game-icon {
+      color: #00D9FF;
+      text-shadow: 0 0 30px #00D9FF;
+    }
+
+    .game-icon {
+      font-size: 72px;
+      text-align: center;
+      margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .game-title {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 15px;
+      color: #fff;
+      text-shadow: 0 0 10px currentColor;
+    }
+
+    .game-description {
+      font-size: 14px;
+      color: #aaa;
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .game-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .game-tag {
+      padding: 5px 12px;
+      border-radius: 15px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .orbit-defense .game-tag {
+      background: rgba(0, 255, 255, 0.2);
+      color: #0ff;
+      border: 1px solid rgba(0, 255, 255, 0.3);
+    }
+
+    .chromo-echo .game-tag {
+      background: rgba(0, 217, 255, 0.2);
+      color: #00D9FF;
+      border: 1px solid rgba(0, 217, 255, 0.3);
+    }
+
+    .play-hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.3s ease;
+    }
+
+    .game-card:hover .play-hint {
+      color: #fff;
+    }
+
+    /* Game Canvas Styles */
     #gameCanvas {
       border: 3px solid;
       border-image: linear-gradient(45deg, #00ffff, #00ff00, #ffff00, #ff00ff, #00ffff) 1;
@@ -96,8 +288,42 @@
         inset 0 0 60px rgba(0, 0, 0, 0.5);
       border-radius: 10px;
       animation: glow 3s ease-in-out infinite;
+      display: none;
     }
 
+    #gameCanvas.active {
+      display: block;
+    }
+
+    /* Back Button */
+    #backButton {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(0, 20, 40, 0.8);
+      border: 2px solid #0ff;
+      border-radius: 10px;
+      color: #0ff;
+      padding: 12px 24px;
+      font-family: 'Orbitron', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      z-index: 50;
+      display: none;
+      transition: all 0.3s ease;
+    }
+
+    #backButton:hover {
+      background: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    }
+
+    #backButton.active {
+      display: block;
+    }
+
+    /* Orbit Defense UI */
     #ui {
       position: absolute;
       top: 20px;
@@ -114,6 +340,11 @@
       z-index: 10;
       box-shadow: 0 8px 32px 0 rgba(0, 255, 255, 0.2);
       animation: slideInFromTop 0.8s ease-out;
+      display: none;
+    }
+
+    #ui.active {
+      display: block;
     }
 
     #stats > div {
@@ -141,10 +372,14 @@
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
-      display: flex;
+      display: none;
       gap: 15px;
       z-index: 10;
       animation: slideInFromBottom 0.8s ease-out 0.3s backwards;
+    }
+
+    #controls.active {
+      display: flex;
     }
 
     .control-btn {
@@ -351,8 +586,55 @@
   </style>
 </head>
 <body>
+  <!-- Game Selection Menu -->
+  <div id="gameMenu">
+    <h1 id="menuTitle">GAME ARCADE</h1>
+    <p id="menuSubtitle">Select a game to play</p>
+
+    <div class="game-select-container">
+      <!-- Orbit Defense Card -->
+      <div class="game-card orbit-defense" onclick="selectGame('orbit-defense')">
+        <div class="game-icon">🛸</div>
+        <h2 class="game-title">ORBIT DEFENSE</h2>
+        <p class="game-description">
+          Defend your planet from waves of incoming threats!
+          Place satellites in orbit and use lasers, missiles, and shields
+          to protect your home world.
+        </p>
+        <div class="game-tags">
+          <span class="game-tag">Strategy</span>
+          <span class="game-tag">Defense</span>
+          <span class="game-tag">Space</span>
+        </div>
+        <span class="play-hint">Click to Play</span>
+      </div>
+
+      <!-- ChromoEcho Card -->
+      <div class="game-card chromo-echo" onclick="selectGame('chromo-echo')">
+        <div class="game-icon">🕐</div>
+        <h2 class="game-title">CHROMO-ECHO</h2>
+        <p class="game-description">
+          Cooperate with your past selves in this time-loop heist puzzle!
+          Record your actions, then watch your ghost replay them while you
+          solve impossible puzzles.
+        </p>
+        <div class="game-tags">
+          <span class="game-tag">Puzzle</span>
+          <span class="game-tag">Time-Loop</span>
+          <span class="game-tag">Stealth</span>
+        </div>
+        <span class="play-hint">Click to Play</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Back to Menu Button -->
+  <button id="backButton" onclick="backToMenu()">← MENU</button>
+
+  <!-- Game Canvas -->
   <canvas id="gameCanvas" width="1200" height="800"></canvas>
 
+  <!-- Orbit Defense UI -->
   <div id="ui">
     <div id="stats">
       <div>Energy: <span id="energy">100</span></div>
@@ -386,11 +668,131 @@
     <h2>GAME OVER</h2>
     <p>Final Score: <span id="finalScore">0</span></p>
     <p>Waves Survived: <span id="finalWave">0</span></p>
-    <p id="highScoreMessage" style="display: none; color: #ffff00; font-size: 24px; margin-top: 20px; text-shadow: 0 0 20px #ffff00;">🏆 NEW HIGH SCORE! 🏆</p>
+    <p id="highScoreMessage" style="display: none; color: #ffff00; font-size: 24px; margin-top: 20px; text-shadow: 0 0 20px #ffff00;">NEW HIGH SCORE!</p>
     <p style="margin-top: 10px; font-size: 16px; color: #aaa;">High Score: <span id="gameOverHighScore">0</span></p>
     <button id="restartBtn">RESTART</button>
   </div>
 
-  <script type="module" src="/src/main.js"></script>
+  <script type="module">
+    import { Game as OrbitDefenseGame } from './src/core/Game.js';
+    import { ChromoEchoGame } from './src/chromoecho/core/Game.js';
+
+    let currentGame = null;
+    let currentGameType = null;
+
+    // Make functions available globally
+    window.selectGame = selectGame;
+    window.backToMenu = backToMenu;
+
+    function selectGame(gameType) {
+      // Stop current game if running
+      if (currentGame) {
+        currentGame.stop();
+        currentGame = null;
+      }
+
+      currentGameType = gameType;
+      const canvas = document.getElementById('gameCanvas');
+      const menu = document.getElementById('gameMenu');
+      const backButton = document.getElementById('backButton');
+
+      // Hide menu, show canvas and back button
+      menu.classList.add('hidden');
+      canvas.classList.add('active');
+      backButton.classList.add('active');
+
+      // Resize canvas handler
+      const resizeCanvas = () => {
+        const maxWidth = window.innerWidth - 40;
+        const maxHeight = window.innerHeight - 40;
+        const aspectRatio = 1200 / 800;
+
+        let width = 1200;
+        let height = 800;
+
+        if (width > maxWidth) {
+          width = maxWidth;
+          height = width / aspectRatio;
+        }
+
+        if (height > maxHeight) {
+          height = maxHeight;
+          width = height * aspectRatio;
+        }
+
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+      };
+
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      if (gameType === 'orbit-defense') {
+        // Show Orbit Defense UI
+        document.getElementById('ui').classList.add('active');
+        document.getElementById('controls').classList.add('active');
+
+        // Update canvas border for Orbit Defense
+        canvas.style.borderImage = 'linear-gradient(45deg, #00ffff, #00ff00, #ffff00, #ff00ff, #00ffff) 1';
+
+        // Initialize Orbit Defense
+        currentGame = new OrbitDefenseGame(canvas);
+        currentGame.start();
+
+        console.log('🛸 Orbit Defense');
+        console.log('Defend your planet from incoming threats!');
+
+      } else if (gameType === 'chromo-echo') {
+        // Hide Orbit Defense UI
+        document.getElementById('ui').classList.remove('active');
+        document.getElementById('controls').classList.remove('active');
+
+        // Update canvas border for ChromoEcho (cyberpunk theme)
+        canvas.style.borderImage = 'linear-gradient(45deg, #00D9FF, #39FF14, #FF2E63, #FFD700, #00D9FF) 1';
+
+        // Initialize ChromoEcho
+        currentGame = new ChromoEchoGame(canvas);
+        currentGame.start();
+
+        console.log('🕐 ChromoEcho: The Time-Loop Heist');
+        console.log('Cooperate with your past selves!');
+      }
+
+      // Handle visibility change
+      const handleVisibility = () => {
+        if (document.hidden && currentGame && currentGame.state === 'playing') {
+          currentGame.togglePause();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+
+    function backToMenu() {
+      // Stop current game
+      if (currentGame) {
+        currentGame.stop();
+        currentGame = null;
+      }
+
+      currentGameType = null;
+
+      // Hide game elements
+      document.getElementById('gameCanvas').classList.remove('active');
+      document.getElementById('backButton').classList.remove('active');
+      document.getElementById('ui').classList.remove('active');
+      document.getElementById('controls').classList.remove('active');
+      document.getElementById('gameOver').classList.remove('show');
+      document.getElementById('gameOver').style.display = 'none';
+
+      // Show menu
+      document.getElementById('gameMenu').classList.remove('hidden');
+    }
+
+    // Initial setup
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🎮 Game Arcade Loaded');
+      console.log('Select a game to begin!');
+    });
+  </script>
 </body>
 </html>
