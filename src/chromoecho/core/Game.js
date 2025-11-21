@@ -202,10 +202,10 @@ export class ChromoEchoGame {
 
         // Out of bounds = wall
         if (checkY < 0 || checkY >= this.layout.length ||
-            checkX < 0 || checkX >= this.layout[0].length) {
+          checkX < 0 || checkX >= this.layout[0].length) {
           if (this.circleRectCollision(x, y, radius,
-              checkX * this.tileSize, checkY * this.tileSize,
-              this.tileSize, this.tileSize)) {
+            checkX * this.tileSize, checkY * this.tileSize,
+            this.tileSize, this.tileSize)) {
             return true;
           }
           continue;
@@ -214,8 +214,8 @@ export class ChromoEchoGame {
         // Wall tile
         if (this.layout[checkY][checkX] === 1) {
           if (this.circleRectCollision(x, y, radius,
-              checkX * this.tileSize, checkY * this.tileSize,
-              this.tileSize, this.tileSize)) {
+            checkX * this.tileSize, checkY * this.tileSize,
+            this.tileSize, this.tileSize)) {
             return true;
           }
         }
@@ -226,8 +226,8 @@ export class ChromoEchoGame {
     for (const door of this.doors) {
       if (door.blocksPassage()) {
         if (this.circleRectCollision(x, y, radius,
-            door.tileX * this.tileSize, door.tileY * this.tileSize,
-            this.tileSize, this.tileSize)) {
+          door.tileX * this.tileSize, door.tileY * this.tileSize,
+          this.tileSize, this.tileSize)) {
           return true;
         }
       }
@@ -269,6 +269,10 @@ export class ChromoEchoGame {
    * Check for paradox - player touching ghost body or trail
    * Returns true if paradox detected
    */
+  /**
+   * Check for paradox - player touching ghost body or trail
+   * Returns true if paradox detected
+   */
   checkParadox() {
     // Skip check in first few ticks (grace period at start)
     if (this.timeManager.currentTick < 30) {
@@ -285,7 +289,8 @@ export class ChromoEchoGame {
       const ghostDistFromStart = Math.sqrt(
         Math.pow(ghost.x - startX, 2) + Math.pow(ghost.y - startY, 2)
       );
-      if (ghostDistFromStart < this.tileSize * 0.5) {
+      // Increased safe zone to prevent immediate paradox on start
+      if (ghostDistFromStart < this.tileSize * 1.5) {
         continue;
       }
 
@@ -304,7 +309,8 @@ export class ChromoEchoGame {
         const trailDistFromStart = Math.sqrt(
           Math.pow(trailPoint.x - startX, 2) + Math.pow(trailPoint.y - startY, 2)
         );
-        if (trailDistFromStart < this.tileSize * 0.5) {
+        // Increased safe zone for trail as well
+        if (trailDistFromStart < this.tileSize * 1.5) {
           continue;
         }
 
@@ -345,73 +351,83 @@ export class ChromoEchoGame {
 
     // Update time manager
     const deltaMs = deltaTime * 1000;
-    this.timeManager.update(deltaMs);
+    // TimeManager handles its own accumulation, but we need to sync game logic with it
+    // Actually, TimeManager.update returns ticksToProcess. We should use that.
+    const ticksToProcess = this.timeManager.update(deltaMs);
 
-    // Get player movement
-    const movement = this.inputHandler.getMovementVector();
-    const playerInput = {
-      dx: movement.dx,
-      dy: movement.dy,
-      action: this.inputHandler.actionPressed
-    };
+    // We need to run the game logic exactly 'ticksToProcess' times with fixed dt
+    const fixedDt = 1 / 60;
 
-    // Update player (no ghost collision blocking - we check paradox after)
-    this.player.update(playerInput, deltaTime, (x, y, r) => {
-      return this.checkCollision(x, y, r);
-    });
+    for (let t = 0; t < ticksToProcess; t++) {
+      // Record current input
+      this.timeManager.recordInput(this.inputHandler.getInputState());
 
-    // Update ghosts (replay recorded inputs)
-    for (let i = 0; i < this.ghosts.length; i++) {
-      const ghost = this.ghosts[i];
-      const recordedInput = this.timeManager.getRecordedInput(i, this.timeManager.currentTick);
+      // Get player movement
+      const movement = this.inputHandler.getMovementVector();
+      const playerInput = {
+        dx: movement.dx,
+        dy: movement.dy,
+        action: this.inputHandler.actionPressed
+      };
 
-      ghost.update(recordedInput, deltaTime, (x, y, r) => {
-        // Ghosts collide with walls but not player (player causes paradox instead)
+      // Update player (no ghost collision blocking - we check paradox after)
+      this.player.update(playerInput, fixedDt, (x, y, r) => {
         return this.checkCollision(x, y, r);
       });
-    }
 
-    // Check for paradox - any self touching another self
-    if (this.checkParadox()) {
-      this.timeManager.triggerParadox();
-      return;
-    }
+      // Update ghosts (replay recorded inputs)
+      for (let i = 0; i < this.ghosts.length; i++) {
+        const ghost = this.ghosts[i];
+        const recordedInput = this.timeManager.getRecordedInput(i, this.timeManager.currentTick);
 
-    // Update guards
-    for (const guard of this.guards) {
-      guard.update(deltaTime);
+        ghost.update(recordedInput, fixedDt, (x, y, r) => {
+          // Ghosts collide with walls but not player (player causes paradox instead)
+          return this.checkCollision(x, y, r);
+        });
+      }
 
-      // Check if guard sees player
-      if (guard.canSeeEntity(this.player)) {
-        this.state = 'detected';
-        if (this.onStateChange) this.onStateChange('detected');
+      // Check for paradox - any self touching another self
+      if (this.checkParadox()) {
+        this.timeManager.triggerParadox();
         return;
       }
 
-      // Ghosts don't trigger guards (they're time echoes)
-    }
+      // Update guards
+      for (const guard of this.guards) {
+        guard.update(fixedDt);
 
-    // Collect all entities for pressure plate checks
-    const allEntities = [this.player, ...this.ghosts];
+        // Check if guard sees player
+        if (guard.canSeeEntity(this.player)) {
+          this.state = 'detected';
+          if (this.onStateChange) this.onStateChange('detected');
+          return;
+        }
 
-    // Update pressure plates
-    for (const plate of this.pressurePlates) {
-      plate.update(allEntities, deltaTime);
-    }
+        // Ghosts don't trigger guards (they're time echoes)
+      }
 
-    // Update doors
-    for (const door of this.doors) {
-      door.update(this.pressurePlates, deltaTime);
-    }
+      // Collect all entities for pressure plate checks
+      const allEntities = [this.player, ...this.ghosts];
 
-    // Update exits
-    for (const exit of this.exits) {
-      exit.update(deltaTime);
+      // Update pressure plates
+      for (const plate of this.pressurePlates) {
+        plate.update(allEntities, fixedDt);
+      }
 
-      // Check if player reached exit
-      if (exit.isPlayerAtExit(this.player)) {
-        this.timeManager.completeLevel();
-        return;
+      // Update doors
+      for (const door of this.doors) {
+        door.update(this.pressurePlates, fixedDt);
+      }
+
+      // Update exits
+      for (const exit of this.exits) {
+        exit.update(fixedDt);
+
+        // Check if player reached exit
+        if (exit.isPlayerAtExit(this.player)) {
+          this.timeManager.completeLevel();
+          return;
+        }
       }
     }
 
@@ -501,6 +517,7 @@ export class ChromoEchoGame {
    * Main game loop
    */
   gameLoop(currentTime) {
+    // Use a maximum delta time to prevent spiral of death on lag spikes
     const deltaTime = Math.min((currentTime - this.lastTime) / 1000, 0.1);
     this.lastTime = currentTime;
 
@@ -519,6 +536,7 @@ export class ChromoEchoGame {
       }
     }
 
+    // Update handles the fixed timestep logic internally now
     this.update(deltaTime);
     this.render();
 

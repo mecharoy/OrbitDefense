@@ -31,7 +31,7 @@ export class Ghost {
 
     // Trail effect - longer trail for paradox detection
     this.trail = [];
-    this.maxTrailLength = 30;
+    // this.maxTrailLength = 30; // Removed for permanent trail
     this.trailInterval = 0;
   }
 
@@ -43,19 +43,20 @@ export class Ghost {
    */
   update(recordedInput, deltaTime, collisionCheck) {
     // Update trail - add points periodically to create continuous path
+    // Update trail - add points periodically to create continuous path
     this.trailInterval += deltaTime;
     if (this.trailInterval >= 0.05) { // Add trail point every 50ms
       this.trailInterval = 0;
       this.trail.unshift({ x: this.x, y: this.y, alpha: 0.6 });
-      if (this.trail.length > this.maxTrailLength) {
-        this.trail.pop();
-      }
+      // Trail is now permanent, no max length check
     }
 
-    // Fade trail
+    // No trail fading
+    /*
     for (let i = 0; i < this.trail.length; i++) {
       this.trail[i].alpha *= 0.85;
     }
+    */
 
     // Update glitch effect
     this.glitchTimer += deltaTime;
